@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="107e2554-c5ab-451e-94f7-405d15f444eb" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="12087972-750f-4a01-bfc7-13e4b9ced91f" basePath="/api/timezone" >
+		<http:request-connection host="worldtimeapi.org" />
+	</http:request-config>
+	<flow name="mule-azure-test-api" doc:id="7f2b6221-5007-4bcc-b1d9-b9e942db4d4d" >
+		<http:listener doc:name="Listener" doc:id="488d31f5-e597-4e4c-bd5c-4ce522c935f6" config-ref="HTTP_Listener_config" path="/{region}/{city}" >
+			<http:response statusCode="#[vars.httpStatus]" />
+		</http:listener>
+		<http:request method="GET" doc:name="Request" doc:id="c00ab36e-3c58-48ff-8d52-58351db99676" config-ref="HTTP_Request_configuration" path="/{region}/{city}" >
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	city : attributes.uriParams.city,
+	region : attributes.uriParams.region
+}]]]></http:uri-params>
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="02c22718-6a77-4343-b803-cb538cddf535" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="e74b2035-e91d-4007-9b27-1d9fb32491a5" message="response : #[payload]" />
+	</flow>
+</mule>
